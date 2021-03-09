@@ -32,6 +32,13 @@ class Matrix {
     return new Matrix(submatrix);
   }
 
+	getMinor(rowIndex, colIndex) {
+		const submatrix = this.getSubmatrix(rowIndex, colIndex);
+		const determinant = submatrix.determinant;
+
+		return determinant;
+	}
+
   get size() {
     const size = {
       rows: this.matrix.length,
@@ -127,4 +134,4 @@ const linearSystem = new LinearSystem([
   '0.48x+1.25y-0.63z=0.35',
 ]);
 
-console.log(linearSystem.solve());
+console.log(linearSystem.coefficientMatrix.determinant);
