@@ -50,7 +50,7 @@ class Matrix {
 
 	get determinant() {
 		if (this.size.rows !== this.size.cols) {
-			console.warn(`Can't find the determinant of a non-square matrix`);
+			console.error(`Can't find the determinant of a non-square matrix`);
 
 			return;
 		}
