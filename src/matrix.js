@@ -34,9 +34,15 @@ class Matrix {
 
 	getMinor(rowIndex, colIndex) {
 		const submatrix = this.getSubmatrix(rowIndex, colIndex);
-		const determinant = submatrix.determinant;
+		const minor = submatrix.determinant;
 
-		return determinant;
+		return minor;
+	}
+
+	getCofactor(rowIndex, colIndex) {
+		const cofactor = this.getMinor(rowIndex, colIndex);
+
+		return cofactor;
 	}
 
 	get size() {
