@@ -67,9 +67,9 @@ class Matrix {
 		const rowIndex = 0;
 
 		const determinant = this.matrix[rowIndex].reduce((acc, el, colIndex) => {
-			const submatrix = this.getSubmatrix(rowIndex, colIndex);
+			const cofactor = this.getCofactor(rowIndex, colIndex);
 
-			return acc += (-1) ** colIndex * el * submatrix.determinant;
+			return acc += el * cofactor;
 		}, 0);
 
 		return determinant; 
