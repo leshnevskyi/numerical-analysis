@@ -55,6 +55,14 @@ class Matrix {
 		return size;
 	}
 
+	get transpose() {
+		const transpose = this.matrix[0].map((_, colIndex) => {
+			return this.matrix.map(row => row[colIndex]);
+		});
+
+		return transpose;
+	}
+
 	get determinant() {
 		if (this.size.rows !== this.size.cols) {
 			console.error(`Can't find the determinant of a non-square matrix`);
@@ -141,4 +149,4 @@ const linearSystem = new LinearSystem([
 	'0.48x+1.25y-0.63z=0.35',
 ]);
 
-console.log(linearSystem.coefficientMatrix.determinant);
+console.log(linearSystem.coefficientMatrix.transpose);
