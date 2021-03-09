@@ -40,7 +40,8 @@ class Matrix {
 	}
 
 	getCofactor(rowIndex, colIndex) {
-		const cofactor = this.getMinor(rowIndex, colIndex);
+		const minor = this.getMinor(rowIndex, colIndex);
+		const cofactor = (-1) ** (rowIndex + colIndex) * minor;
 
 		return cofactor;
 	}
