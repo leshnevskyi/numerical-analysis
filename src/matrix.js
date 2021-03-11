@@ -55,6 +55,10 @@ class Matrix {
 		return numberProduct ?? matrixProduct;
 	}
 
+	multiply(...factors) {
+		return Matrix.multiply(this, ...factors);
+	}
+
 	replaceRow(rowIndex, newRow) {
 		let newMatrix = new Matrix(this.matrix);
 
@@ -108,9 +112,9 @@ class Matrix {
 	}
 
 	get transpose() {
-		const transpose = this.matrix[0].map((_, colIndex) => {
+		const transpose = new Matrix(this.matrix[0].map((_, colIndex) => {
 			return this.matrix.map(row => row[colIndex]);
-		});
+		}));
 
 		return transpose;
 	}
@@ -161,6 +165,13 @@ class Matrix {
 	get adjugate() {
 		return this.comatrix.transpose;
 	}
+
+	get inverse() {
+		const determinant = this.determinant;
+		const inverse = this.adjugate.multiply(1 / determinant);
+
+		return inverse;
+	}
 }
 
 class LinearSystem {
@@ -187,6 +198,13 @@ class LinearSystem {
 
 		matrix: () => {
 			const solution = {};
+			const inverseMatrix = this.coefficientMatrix.inverse;
+			const constTermsMatrix = (new Matrix([this.constTerms])).transpose;
+			const solutionMatrix = inverseMatrix.multiply(constTermsMatrix);
+
+			this.variables.forEach((variable, index) => {
+				solution[variable] = solutionMatrix.matrix[index][0];
+			});
 
 			return solution;
 		},
@@ -230,5 +248,3 @@ const linearSystem = new LinearSystem([
 
 console.log(linearSystem.solve(LinearSystem.methods.cramer));
 console.log(linearSystem.solve(LinearSystem.methods.matrix));
-
-//console.log(linearSystem.coefficientMatrix.determinant);
