@@ -167,6 +167,12 @@ class Matrix {
 	}
 
 	get inverse() {
+		if (!this.isInvertible) {
+			console.error('The matrix is singular');
+
+			return;
+		}
+
 		const determinant = this.determinant;
 		const inverse = this.adjugate.multiply(1 / determinant);
 
@@ -184,6 +190,12 @@ class LinearSystem {
 		cramer: () => {
 			const solution = {};
 			const determinant = this.coefficientMatrix.determinant;
+
+			if (determinant === 0) {
+				console.error(`The determinant can't be zero`);
+
+				return;
+			}
 
 			this.variables.forEach((variable, index) => {
 				const replacedMatrix = this.coefficientMatrix.replaceCol(
