@@ -1,6 +1,58 @@
 class Matrix {
-	constructor(matrix = [[]]) {
-		this.matrix = matrix;
+	constructor(...args) {
+		if (args[0] instanceof Array) {
+			this.matrix = args[0];
+		} else {
+			let rowCount = args[0] ?? 1;
+			let colCount = args[1] ?? 1;
+			
+			this.matrix = new Array(rowCount).fill(null).map(() => {
+				const row = new Array(colCount).fill(null);
+
+				return row;
+			});
+		}
+	}
+
+	static multiply(...factors) {
+		const matrices = [...factors.filter(factor => factor instanceof Matrix)];
+		const numbers = [...factors.filter(factor => !isNaN(factor))];
+
+		const matrixProduct = matrices.length && matrices.reduce((acc, matrix) => {
+			const matrixA = acc;
+			const matrixB = matrix;
+
+			if (matrixA.size.cols !== matrixB.size.rows) {
+				throw new Error(
+					'Cannot multiply the matrices. The number of columns in the first matrix must be equal to the number of rows in the second matrix'
+				);
+			}
+
+			const product = new Matrix(matrixA.size.rows, matrixB.size.cols);
+
+			product.matrix.forEach((row, rowIndex) => {
+				row.forEach((_, colIndex) => {
+					const r = rowIndex;
+					const c = colIndex;
+
+					matrixB.matrix.forEach((_, i) => {
+						product.matrix[r][c] += matrixA.matrix[r][i] * matrixB.matrix[i][c];
+					});
+				});
+			});
+
+			return product;
+		});
+
+		const numberProduct = numbers.reduce((acc, number) => acc *= number, 1);
+		
+		if (numberProduct && matrixProduct) {
+			return new Matrix(matrixProduct.matrix.map(row => {
+				return row.map(el => el * numberProduct);
+			}));
+		}
+
+		return numberProduct ?? matrixProduct;
 	}
 
 	replaceRow(rowIndex, newRow) {
@@ -82,6 +134,33 @@ class Matrix {
 
 		return determinant; 
 	}
+
+	get isSquare() {
+		return this.size.rows === this.size.cols;
+	}
+
+	get isInvertible() {
+		return this.determinant && this.isSquare;
+	}
+
+	get comatrix() {
+		const comatrix = new Matrix(this.size.rows, this.size.cols);
+
+		this.matrix.forEach((row, rowIndex) => {
+			row.forEach((_, colIndex) => {
+				const r = rowIndex;
+				const c = colIndex;
+
+				comatrix.matrix[r][c] = this.getCofactor(r, c);
+			});
+		});
+
+		return comatrix;
+	}
+
+	get adjugate() {
+		return this.comatrix.transpose;
+	}
 }
 
 class LinearSystem {
@@ -131,7 +210,7 @@ class LinearSystem {
 		)].map(match => Number(match[1]));
 	}
 
-	solve(method = LinearSystem.methods.matrix) {
+	solve(method = LinearSystem.methods.cramer) {
 		switch (method) {
 			case LinearSystem.methods.matrix:
 				return this.#methods.matrix();
@@ -149,4 +228,7 @@ const linearSystem = new LinearSystem([
 	'0.48x+1.25y-0.63z=0.35',
 ]);
 
-console.log(linearSystem.coefficientMatrix.transpose);
+console.log(linearSystem.solve(LinearSystem.methods.cramer));
+console.log(linearSystem.solve(LinearSystem.methods.matrix));
+
+//console.log(linearSystem.coefficientMatrix.determinant);
