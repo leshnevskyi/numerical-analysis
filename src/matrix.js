@@ -59,8 +59,18 @@ class Matrix {
 		return Matrix.multiply(this, ...factors);
 	}
 
+	pushRow(...rows) {
+		this.matrix.push(...rows);
+	}
+
+	pushCol(...cols) {
+		this.matrix.forEach((row, index) => {
+			row.push(...cols.map(col => col[index]));
+		});
+	}
+
 	replaceRow(rowIndex, newRow) {
-		let newMatrix = new Matrix(this.matrix);
+		const newMatrix = this.clone;
 
 		newMatrix.matrix[rowIndex] = newRow;
 
@@ -68,11 +78,11 @@ class Matrix {
 	}
 
 	replaceCol(colIndex, newCol) {
-		const newMatrix = new Matrix(this.matrix.map(([...row], rowIndex) => {
-			row[colIndex] = newCol[rowIndex];
+		const newMatrix = this.clone;
 
-			return row;
-		}));
+		newMatrix.matrix.forEach(row => {
+			row[colIndex] = newCol[colIndex];
+		});
 
 		return newMatrix;
 	}
@@ -245,7 +255,7 @@ class LinearSystem {
 		matrix: () => {
 			const solution = {};
 			const inverseMatrix = this.coefficientMatrix.inverse;
-			const constTermsMatrix = (new Matrix([this.constTerms])).transpose;
+			const constTermsMatrix = this.constTermsMatrix;
 			const solutionMatrix = inverseMatrix.multiply(constTermsMatrix);
 
 			this.variables.forEach((variable, index) => {
@@ -272,6 +282,9 @@ class LinearSystem {
 		this.constTerms = [...linearEquations.join(' ').matchAll(
 			/=(\d+(?:\.\d+)?)/g
 		)].map(match => Number(match[1]));
+
+		this.constTermsMatrix = new Matrix([this.constTerms]).transpose;
+		this.augmentedMatrix = this.coefficientMatrix.clone.push(this.constTerms);
 	}
 
 	solve(method = LinearSystem.methods.cramer) {
