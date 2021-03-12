@@ -77,6 +77,32 @@ class Matrix {
 		return newMatrix;
 	}
 
+	swapRows(firstRowIndex, secondRowIndex) {
+		const a = firstRowIndex;
+		const b = secondRowIndex;
+		const newMatrix = this.clone;
+
+		[
+			newMatrix.matrix[a], 
+			newMatrix.matrix[b],
+		] = [
+			newMatrix.matrix[b], 
+			newMatrix.matrix[a],
+		];
+
+		return newMatrix;
+	}
+
+	swapCols(firstColIndex, secondColIndex) {
+		const a = firstColIndex;
+		const b = secondColIndex;
+		const newMatrix = this.clone;
+
+		this.matrix.forEach(row => [row[a], row[b]] = [row[b], row[a]]);
+
+		return newMatrix;
+	}
+
 	getSubmatrix(rowIndex, colIndex) {
 		const i = rowIndex;
 		const j = colIndex;
@@ -102,6 +128,14 @@ class Matrix {
 		return cofactor;
 	}
 
+	get clone() {
+		const clonedMatrix = new Matrix(this.matrix.map(row => {
+			return [...row.map(el => el)];
+		}));
+
+		return clonedMatrix;
+	}
+
 	get size() {
 		const size = {
 			rows: this.matrix.length,
@@ -120,7 +154,7 @@ class Matrix {
 	}
 
 	get determinant() {
-		if (this.isSquare) {
+		if (!this.isSquare) {
 			console.error(`Can't find the determinant of a non-square matrix`);
 
 			return;
