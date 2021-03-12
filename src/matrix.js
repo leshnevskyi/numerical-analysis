@@ -120,7 +120,7 @@ class Matrix {
 	}
 
 	get determinant() {
-		if (this.size.rows !== this.size.cols) {
+		if (this.isSquare) {
 			console.error(`Can't find the determinant of a non-square matrix`);
 
 			return;
