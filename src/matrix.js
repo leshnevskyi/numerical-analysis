@@ -69,6 +69,22 @@ class Matrix {
 		});
 	}
 
+	deleteRow(rowIndex) {
+		const newMatrix = new Matrix(this.clone.matrix.filter((_, index) => {
+			return index !== rowIndex;
+		}));
+
+		return newMatrix;
+	}
+
+	deleteCol(colIndex) {
+		const newMatrix = new Matrix(this.clone.matrix.map(row => {
+			return row.filter((_, index) => index !== colIndex);
+		}));
+
+		return newMatrix;
+	}
+
 	replaceRow(rowIndex, newRow) {
 		const newMatrix = this.clone;
 
@@ -263,6 +279,14 @@ class LinearSystem {
 			});
 
 			return solution;
+		},
+
+		gaussianElimination: () => {
+			const solution = {};
+
+			(function getFirstVariable(matrix) {
+
+			})(this.augmentedMatrix);
 		},
 	}
 
