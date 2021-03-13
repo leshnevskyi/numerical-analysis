@@ -141,6 +141,30 @@ class Matrix {
 		return newMatrix;
 	}
 
+	addRows(augendRowIndex, addendRowIndex) {
+		this.matrix[addendRowIndex].forEach((el, colIndex) => {
+			this.matrix[augendRowIndex][colIndex] += el;
+		});
+	}
+
+	addCols(augendColIndex, addendColIndex) {
+		this.matrix.forEach(row => {
+			row[augendColIndex] += row[addendColIndex];
+		});
+	}
+
+	substractRows(minuendRowIndex, subtrahendRowIndex) {
+		this.matrix[subtrahendRowIndex].forEach((el, colIndex) => {
+			this.matrix[minuendRowIndex][colIndex] -= el;
+		});
+	}
+
+	substractCols(minuendColIndex, subtrahendColIndex) {
+		this.matrix.forEach(row => {
+			row[minuendColIndex] -= row[subtrahendColIndex];
+		});
+	}
+
 	getSubmatrix(rowIndex, colIndex) {
 		const i = rowIndex;
 		const j = colIndex;
@@ -178,7 +202,7 @@ class Matrix {
 		const size = {
 			rows: this.matrix.length,
 			cols: this.matrix[0].length,
-		}
+		};
 
 		return size;
 	}
@@ -256,6 +280,7 @@ class LinearSystem {
 	static methods = {
 		cramer: Symbol('cramer'),
 		matrix: Symbol('matrix'),
+		gaussianElimination: Symbol('gaussianElimination'),
 	}
 
 	#methods = {
@@ -297,7 +322,9 @@ class LinearSystem {
 			const solution = {};
 
 			(function getFirstVariable(matrix) {
-
+				const col = matrix.getCol(0).map(el => Math.abs(el));
+				const maxElIndex = col.indexOf(Math.max(...col));
+				console.log(maxElIndex);
 			})(this.augmentedMatrix);
 		},
 	}
@@ -330,6 +357,8 @@ class LinearSystem {
 				return this.#methods.matrix();
 			case LinearSystem.methods.cramer:
 				return this.#methods.cramer();
+			case LinearSystem.methods.gaussianElimination:
+				return this.#methods.gaussianElimination();
 			default:
 				console.error('No such method');
 		}
@@ -342,5 +371,9 @@ const linearSystem = new LinearSystem([
 	'0.48x+1.25y-0.63z=0.35',
 ]);
 
-console.log(linearSystem.solve(LinearSystem.methods.cramer));
-console.log(linearSystem.solve(LinearSystem.methods.matrix));
+console.log(linearSystem.augmentedMatrix);
+linearSystem.augmentedMatrix.addCols(1, 2);
+console.log(linearSystem.augmentedMatrix);
+// linearSystem.solve(LinearSystem.methods.gaussianElimination);
+// console.log(linearSystem.solve(LinearSystem.methods.cramer));
+// console.log(linearSystem.solve(LinearSystem.methods.matrix));
