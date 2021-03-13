@@ -165,6 +165,18 @@ class Matrix {
 		});
 	}
 
+	multiplyRow(rowIndex, factor) {
+		this.matrix[rowIndex].forEach((_, colIndex) => {
+			this.matrix[rowIndex][colIndex] *= factor;
+		});
+	}
+
+	multiplyCol(colIndex, factor) {
+		this.matrix.forEach(row => {
+			row[colIndex] *= factor;
+		});
+	}
+
 	getSubmatrix(rowIndex, colIndex) {
 		const i = rowIndex;
 		const j = colIndex;
@@ -372,7 +384,7 @@ const linearSystem = new LinearSystem([
 ]);
 
 console.log(linearSystem.augmentedMatrix);
-linearSystem.augmentedMatrix.addCols(1, 2);
+linearSystem.augmentedMatrix.multiplyCol(1, -2);
 console.log(linearSystem.augmentedMatrix);
 // linearSystem.solve(LinearSystem.methods.gaussianElimination);
 // console.log(linearSystem.solve(LinearSystem.methods.cramer));
