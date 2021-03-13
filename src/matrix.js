@@ -284,7 +284,8 @@ class LinearSystem {
 		)].map(match => Number(match[1]));
 
 		this.constTermsMatrix = new Matrix([this.constTerms]).transpose;
-		this.augmentedMatrix = this.coefficientMatrix.clone.push(this.constTerms);
+		this.augmentedMatrix = this.coefficientMatrix.clone;
+		this.augmentedMatrix.pushCol(this.constTerms);
 	}
 
 	solve(method = LinearSystem.methods.cramer) {
