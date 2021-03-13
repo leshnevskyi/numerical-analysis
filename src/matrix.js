@@ -59,6 +59,18 @@ class Matrix {
 		return Matrix.multiply(this, ...factors);
 	}
 
+	getRow(rowIndex) {
+		const row = [...this.matrix[rowIndex]];
+
+		return row;
+	}
+
+	getCol(colIndex) {
+		const col =  this.matrix.map(row => row[colIndex]);
+
+		return col;
+	}
+
 	pushRow(...rows) {
 		this.matrix.push(...rows);
 	}
