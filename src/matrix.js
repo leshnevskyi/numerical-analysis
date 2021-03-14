@@ -334,15 +334,6 @@ class LinearSystem {
 			const solution = {};
 
 			const getFirstVariable = (matrix, index) => {
-				if (matrix.size.rows === 1) {
-					const res = matrix.matrix[0][1] / matrix.matrix[0][0];
-					const variable = this.variables[index];
-
-					solution[variable] = res;
-
-					return res;
-				}
-
 				const firstCol = matrix.getCol(0);
 				const firstAbsCol = firstCol.map(el => Math.abs(el))
 				const maxAbsValIndex = firstAbsCol.indexOf(Math.max(...firstAbsCol));
@@ -362,17 +353,18 @@ class LinearSystem {
 				const variable = this.variables[index];
 
 				solution[variable] = row[row.length - 1];
-				solution[variable] -= row[1] * getFirstVariable(newMatrix, index + 1);
+				
+				if (matrix.size.rows !== 1) {
+					getFirstVariable(newMatrix, index + 1);
 
-				row.slice(2, row.length - 1).forEach((coefficient, currIndex) => {
-					const currVariable = this.variables[index + 2 + currIndex];
-					
-					solution[variable] -= coefficient * solution[currVariable];
-				});
+					row.slice(1, row.length - 1).forEach((coefficient, currIndex) => {
+						const currVariable = this.variables[index + 1 + currIndex];
+						
+						solution[variable] -= coefficient * solution[currVariable];
+					});
+				}
 
 				solution[variable] /= maxAbsVal;
-
-				return solution[variable];
 			}
 
 			getFirstVariable(this.augmentedMatrix, 0);
