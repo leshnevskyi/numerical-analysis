@@ -376,7 +376,8 @@ class LinearSystem {
 			}
 
 			getFirstVariable(this.augmentedMatrix, 0);
-			console.log(solution);
+
+			return solution;
 		},
 	}
 
