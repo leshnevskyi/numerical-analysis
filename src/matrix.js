@@ -108,8 +108,8 @@ class Matrix {
 	replaceCol(colIndex, newCol) {
 		const newMatrix = this.clone;
 
-		newMatrix.matrix.forEach(row => {
-			row[colIndex] = newCol[colIndex];
+		newMatrix.matrix.forEach((row, rowIndex) => {
+			row[colIndex] = newCol[rowIndex];
 		});
 
 		return newMatrix;
@@ -141,27 +141,27 @@ class Matrix {
 		return newMatrix;
 	}
 
-	addRows(augendRowIndex, addendRowIndex) {
+	addRows(augendRowIndex, addendRowIndex, factor = 1) {
 		this.matrix[addendRowIndex].forEach((el, colIndex) => {
-			this.matrix[augendRowIndex][colIndex] += el;
+			this.matrix[augendRowIndex][colIndex] += el * factor;
 		});
 	}
 
-	addCols(augendColIndex, addendColIndex) {
+	addCols(augendColIndex, addendColIndex, factor = 1) {
 		this.matrix.forEach(row => {
-			row[augendColIndex] += row[addendColIndex];
+			row[augendColIndex] += row[addendColIndex] * factor;
 		});
 	}
 
-	substractRows(minuendRowIndex, subtrahendRowIndex) {
+	substractRows(minuendRowIndex, subtrahendRowIndex, factor = 1) {
 		this.matrix[subtrahendRowIndex].forEach((el, colIndex) => {
-			this.matrix[minuendRowIndex][colIndex] -= el;
+			this.matrix[minuendRowIndex][colIndex] -= el * factor;
 		});
 	}
 
-	substractCols(minuendColIndex, subtrahendColIndex) {
+	substractCols(minuendColIndex, subtrahendColIndex, factor = 1) {
 		this.matrix.forEach(row => {
-			row[minuendColIndex] -= row[subtrahendColIndex];
+			row[minuendColIndex] -= row[subtrahendColIndex] * factor;
 		});
 	}
 
@@ -333,11 +333,50 @@ class LinearSystem {
 		gaussianElimination: () => {
 			const solution = {};
 
-			(function getFirstVariable(matrix) {
-				const col = matrix.getCol(0).map(el => Math.abs(el));
-				const maxElIndex = col.indexOf(Math.max(...col));
-				console.log(maxElIndex);
-			})(this.augmentedMatrix);
+			const getFirstVariable = (matrix, index) => {
+				if (matrix.size.rows === 1) {
+					const res = matrix.matrix[0][1] / matrix.matrix[0][0];
+					const variable = this.variables[index];
+
+					solution[variable] = res;
+
+					return res;
+				}
+
+				const firstCol = matrix.getCol(0);
+				const firstAbsCol = firstCol.map(el => Math.abs(el))
+				const maxAbsValIndex = firstAbsCol.indexOf(Math.max(...firstAbsCol));
+				const maxAbsVal = firstCol[maxAbsValIndex];
+				const factors = firstCol.map(el => el / maxAbsVal);
+				const row = matrix.getRow(maxAbsValIndex);
+				let newMatrix = matrix.clone.deleteCol(0);
+
+				newMatrix.matrix.forEach((_, rowIndex) => {
+					rowIndex !== maxAbsValIndex && newMatrix.substractRows(
+						rowIndex, maxAbsValIndex, factors[rowIndex]
+					);
+				});
+
+				newMatrix = newMatrix.deleteRow(maxAbsValIndex);
+
+				const variable = this.variables[index];
+
+				solution[variable] = row[row.length - 1];
+				solution[variable] -= row[1] * getFirstVariable(newMatrix, index + 1);
+
+				row.slice(2, row.length - 1).forEach((coefficient, currIndex) => {
+					const currVariable = this.variables[index + 2 + currIndex];
+					
+					solution[variable] -= coefficient * solution[currVariable];
+				});
+
+				solution[variable] /= maxAbsVal;
+
+				return solution[variable];
+			}
+
+			getFirstVariable(this.augmentedMatrix, 0);
+			console.log(solution);
 		},
 	}
 
@@ -383,9 +422,6 @@ const linearSystem = new LinearSystem([
 	'0.48x+1.25y-0.63z=0.35',
 ]);
 
-console.log(linearSystem.augmentedMatrix);
-linearSystem.augmentedMatrix.multiplyCol(1, -2);
-console.log(linearSystem.augmentedMatrix);
-// linearSystem.solve(LinearSystem.methods.gaussianElimination);
-// console.log(linearSystem.solve(LinearSystem.methods.cramer));
-// console.log(linearSystem.solve(LinearSystem.methods.matrix));
+console.log(linearSystem.solve(LinearSystem.methods.cramer));
+console.log(linearSystem.solve(LinearSystem.methods.matrix));
+console.log(linearSystem.solve(LinearSystem.methods.gaussianElimination));
