@@ -55,6 +55,16 @@ class Matrix {
 		return numberProduct ?? matrixProduct;
 	}
 
+	fill(value) {
+		const newMatrix = this.clone;
+
+		newMatrix.matrix.forEach(row => {
+			row = row.fill(value);
+		});
+
+		return newMatrix;
+	}
+
 	multiply(...factors) {
 		return Matrix.multiply(this, ...factors);
 	}
