@@ -303,6 +303,7 @@ class LinearSystem {
 		cramer: Symbol('cramer'),
 		matrix: Symbol('matrix'),
 		gaussianElimination: Symbol('gaussianElimination'),
+		luDecomposition: Symbol('luDecomposition'),
 	}
 
 	#methods = {
@@ -381,6 +382,10 @@ class LinearSystem {
 
 			return solution;
 		},
+
+		luDecomposition: () => {
+			
+		},
 	}
 
 	constructor(linearEquations) {
@@ -413,6 +418,8 @@ class LinearSystem {
 				return this.#methods.cramer();
 			case LinearSystem.methods.gaussianElimination:
 				return this.#methods.gaussianElimination();
+			case LinearSystem.methods.luDecomposition:
+				return this.#methods.luDecomposition();
 			default:
 				console.error('No such method');
 		}
