@@ -331,8 +331,8 @@ class LinearSystem {
 		matrix: () => {
 			const solution = {};
 			const inverseMatrix = this.coefficientMatrix.inverse;
-			const constTermsMatrix = this.constTermsMatrix;
-			const solutionMatrix = inverseMatrix.multiply(constTermsMatrix);
+			const constTermMatrix = this.constTermMatrix;
+			const solutionMatrix = inverseMatrix.multiply(constTermMatrix);
 
 			this.variables.forEach((variable, index) => {
 				solution[variable] = solutionMatrix.matrix[index][0];
@@ -344,9 +344,9 @@ class LinearSystem {
 		gaussianElimination: () => {
 			const solution = {};
 
-			const getFirstVariable = (matrix, index) => {
+			const getVariables = (matrix, index = 0) => {
 				const firstCol = matrix.getCol(0);
-				const firstAbsCol = firstCol.map(el => Math.abs(el))
+				const firstAbsCol = firstCol.map(el => Math.abs(el));
 				const maxAbsValIndex = firstAbsCol.indexOf(Math.max(...firstAbsCol));
 				const maxAbsVal = firstCol[maxAbsValIndex];
 				const factors = firstCol.map(el => el / maxAbsVal);
@@ -366,7 +366,7 @@ class LinearSystem {
 				solution[variable] = row[row.length - 1];
 				
 				if (matrix.size.rows !== 1) {
-					getFirstVariable(newMatrix, index + 1);
+					getVariables(newMatrix, index + 1);
 
 					row.slice(1, row.length - 1).forEach((coefficient, currIndex) => {
 						const currVariable = this.variables[index + 1 + currIndex];
@@ -378,13 +378,65 @@ class LinearSystem {
 				solution[variable] /= maxAbsVal;
 			}
 
-			getFirstVariable(this.augmentedMatrix, 0);
+			getVariables(this.augmentedMatrix);
 
 			return solution;
 		},
 
 		luDecomposition: () => {
-			
+			const solution = {};
+			const size = this.coefficientMatrix.size.rows;
+			const lowerTriangularMatrix = new Matrix(size, size).fill(0);
+			const upperTriangularMatrix = this.coefficientMatrix.clone;
+
+			lowerTriangularMatrix.matrix.forEach((row, rowIndex) => {
+				row[rowIndex] = 1;
+			});
+
+			for (let i = 0; i < size - 1; i++) {
+				for (let j = i + 1; j < size; j++) {
+					const factor = upperTriangularMatrix.matrix[j][i] 
+						/ upperTriangularMatrix.matrix[i][i];
+
+					lowerTriangularMatrix.matrix[j][i] = factor;
+					upperTriangularMatrix.substractRows(j, i, factor);
+				}
+			}
+
+			const uxMatrix = new Matrix(size, 1).fill(0);
+
+			uxMatrix.matrix.forEach((row, rowIndex) => {
+				const constTerm = this.constTerms[rowIndex];
+
+				row[0] = constTerm - lowerTriangularMatrix.matrix[rowIndex]
+					.slice(0, rowIndex)
+					.reduce((acc, currValue, currIndex) => {
+						return acc + currValue * uxMatrix.matrix[currIndex][0];
+					}, 0);
+			});
+
+			const getVariables = (index = 0) => {
+				const row = upperTriangularMatrix.getRow(index);
+				const variable = this.variables[index];
+				
+				solution[variable] = uxMatrix.matrix[index][0];
+
+				if (index !== size - 1) {
+					getVariables(index + 1);
+
+					row.slice(index + 1, size).forEach((coefficient, currIndex) => {
+						const currVariable = this.variables[index + 1 + currIndex];
+						
+						solution[variable] -= coefficient * solution[currVariable];
+					});
+				}
+
+				solution[variable] /= row[index];
+			}
+
+			getVariables();
+
+			return solution;
 		},
 	}
 
@@ -405,7 +457,7 @@ class LinearSystem {
 			/=(\d+(?:\.\d+)?)/g
 		)].map(match => Number(match[1]));
 
-		this.constTermsMatrix = new Matrix([this.constTerms]).transpose;
+		this.constTermMatrix = new Matrix([this.constTerms]).transpose;
 		this.augmentedMatrix = this.coefficientMatrix.clone;
 		this.augmentedMatrix.pushCol(this.constTerms);
 	}
@@ -435,3 +487,4 @@ const linearSystem = new LinearSystem([
 console.log(linearSystem.solve(LinearSystem.methods.cramer));
 console.log(linearSystem.solve(LinearSystem.methods.matrix));
 console.log(linearSystem.solve(LinearSystem.methods.gaussianElimination));
+console.log(linearSystem.solve(LinearSystem.methods.luDecomposition));
