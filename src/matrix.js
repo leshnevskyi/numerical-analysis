@@ -454,7 +454,7 @@ class LinearSystem {
 		});
 
 		this.constTerms = [...linearEquations.join(' ').matchAll(
-			/=(\d+(?:\.\d+)?)/g
+			/=((?:\+|\-)?\d+(?:\.\d+)?)/g
 		)].map(match => Number(match[1]));
 
 		this.constTermMatrix = new Matrix([this.constTerms]).transpose;
