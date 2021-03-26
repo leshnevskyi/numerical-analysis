@@ -1,17 +1,56 @@
 class Matrix {
 	constructor(...args) {
 		if (args[0] instanceof Array) {
-			this.matrix = args[0];
+			this.rows = args[0];
 		} else {
 			let rowCount = args[0] ?? 1;
 			let colCount = args[1] ?? 1;
 			
-			this.matrix = new Array(rowCount).fill(null).map(() => {
+			this.rows = new Array(rowCount).fill(null).map(() => {
 				const row = new Array(colCount).fill(null);
 
 				return row;
 			});
 		}
+	}
+
+	static add(...matrices) {
+		const firstMatrix = matrices[0];
+
+		const areConformable = matrices.every(matrix => {
+			return (
+				firstMatrix.size.rows === matrix.size.rows
+				&& firstMatrix.size.cols === matrix.size.cols
+			);
+		});
+
+		if (!areConformable) {
+			console.error(
+				`Matrices are not conformable for addition and subtraction`
+			);
+
+			return;
+		}
+
+		const sumMatrix = matrices.reduce((sumMatrix, currMatrix) => {
+			return sumMatrix.map((el, rowIndex, colIndex) => {
+				return el + currMatrix.rows[rowIndex][colIndex];
+			});
+		}, new Matrix(firstMatrix.size.rows, firstMatrix.size.cols));
+
+		return sumMatrix;
+	}
+
+	static subtract(...matrices) {
+		const minuendMatrix = matrices[0];
+
+		const subtrahendMatrices = matrices.slice(1).map(matrix => {
+			return matrix.multiply(-1);
+		});
+
+		const diffMatrix = Matrix.add(minuendMatrix, ...subtrahendMatrices);
+
+		return diffMatrix;
 	}
 
 	static multiply(...factors) {
@@ -30,13 +69,13 @@ class Matrix {
 
 			const product = new Matrix(matrixA.size.rows, matrixB.size.cols);
 
-			product.matrix.forEach((row, rowIndex) => {
+			product.rows.forEach((row, rowIndex) => {
 				row.forEach((_, colIndex) => {
 					const r = rowIndex;
 					const c = colIndex;
 
-					matrixB.matrix.forEach((_, i) => {
-						product.matrix[r][c] += matrixA.matrix[r][i] * matrixB.matrix[i][c];
+					matrixB.rows.forEach((_, i) => {
+						product.rows[r][c] += matrixA.rows[r][i] * matrixB.rows[i][c];
 					});
 				});
 			});
@@ -47,7 +86,7 @@ class Matrix {
 		const numberProduct = numbers.reduce((acc, number) => acc *= number, 1);
 		
 		if (numberProduct && matrixProduct) {
-			return new Matrix(matrixProduct.matrix.map(row => {
+			return new Matrix(matrixProduct.rows.map(row => {
 				return row.map(el => el * numberProduct);
 			}));
 		}
@@ -55,14 +94,38 @@ class Matrix {
 		return numberProduct ?? matrixProduct;
 	}
 
+	get(i, j) {
+		const el = this.rows[i][j];
+
+		return el;
+	}
+
+	map(callback, thisArg = this) {
+		const newMatrix = new Matrix(this.rows.map((row, rowIndex) => {
+			return row.map((el, colIndex) => {
+				return callback(el, rowIndex, colIndex);
+			}, thisArg);
+		}));
+
+		return newMatrix;
+	}
+
 	fill(value) {
 		const newMatrix = this.clone;
 
-		newMatrix.matrix.forEach(row => {
+		newMatrix.rows.forEach(row => {
 			row = row.fill(value);
 		});
 
 		return newMatrix;
+	}
+
+	add(...matrices) {
+		return Matrix.add(this, ...matrices);
+	}
+
+	subtract(...matrices) {
+		return Matrix.subtract(this, ...matrices);
 	}
 
 	multiply(...factors) {
@@ -70,29 +133,29 @@ class Matrix {
 	}
 
 	getRow(rowIndex) {
-		const row = [...this.matrix[rowIndex]];
+		const row = [...this.rows[rowIndex]];
 
 		return row;
 	}
 
 	getCol(colIndex) {
-		const col =  this.matrix.map(row => row[colIndex]);
+		const col = this.rows.map(row => row[colIndex]);
 
 		return col;
 	}
 
 	pushRow(...rows) {
-		this.matrix.push(...rows);
+		this.rows.push(...rows);
 	}
 
 	pushCol(...cols) {
-		this.matrix.forEach((row, index) => {
+		this.rows.forEach((row, index) => {
 			row.push(...cols.map(col => col[index]));
 		});
 	}
 
 	deleteRow(rowIndex) {
-		const newMatrix = new Matrix(this.clone.matrix.filter((_, index) => {
+		const newMatrix = new Matrix(this.clone.rows.filter((_, index) => {
 			return index !== rowIndex;
 		}));
 
@@ -100,7 +163,7 @@ class Matrix {
 	}
 
 	deleteCol(colIndex) {
-		const newMatrix = new Matrix(this.clone.matrix.map(row => {
+		const newMatrix = new Matrix(this.clone.rows.map(row => {
 			return row.filter((_, index) => index !== colIndex);
 		}));
 
@@ -110,7 +173,7 @@ class Matrix {
 	replaceRow(rowIndex, newRow) {
 		const newMatrix = this.clone;
 
-		newMatrix.matrix[rowIndex] = newRow;
+		newMatrix.rows[rowIndex] = newRow;
 
 		return newMatrix;
 	}
@@ -118,7 +181,7 @@ class Matrix {
 	replaceCol(colIndex, newCol) {
 		const newMatrix = this.clone;
 
-		newMatrix.matrix.forEach((row, rowIndex) => {
+		newMatrix.rows.forEach((row, rowIndex) => {
 			row[colIndex] = newCol[rowIndex];
 		});
 
@@ -131,11 +194,11 @@ class Matrix {
 		const newMatrix = this.clone;
 
 		[
-			newMatrix.matrix[a], 
-			newMatrix.matrix[b],
+			newMatrix.rows[a], 
+			newMatrix.rows[b],
 		] = [
-			newMatrix.matrix[b], 
-			newMatrix.matrix[a],
+			newMatrix.rows[b], 
+			newMatrix.rows[a],
 		];
 
 		return newMatrix;
@@ -146,43 +209,43 @@ class Matrix {
 		const b = secondColIndex;
 		const newMatrix = this.clone;
 
-		this.matrix.forEach(row => [row[a], row[b]] = [row[b], row[a]]);
+		this.rows.forEach(row => [row[a], row[b]] = [row[b], row[a]]);
 
 		return newMatrix;
 	}
 
 	addRows(augendRowIndex, addendRowIndex, factor = 1) {
-		this.matrix[addendRowIndex].forEach((el, colIndex) => {
-			this.matrix[augendRowIndex][colIndex] += el * factor;
+		this.rows[addendRowIndex].forEach((el, colIndex) => {
+			this.rows[augendRowIndex][colIndex] += el * factor;
 		});
 	}
 
 	addCols(augendColIndex, addendColIndex, factor = 1) {
-		this.matrix.forEach(row => {
+		this.rows.forEach(row => {
 			row[augendColIndex] += row[addendColIndex] * factor;
 		});
 	}
 
-	substractRows(minuendRowIndex, subtrahendRowIndex, factor = 1) {
-		this.matrix[subtrahendRowIndex].forEach((el, colIndex) => {
-			this.matrix[minuendRowIndex][colIndex] -= el * factor;
+	subtractRows(minuendRowIndex, subtrahendRowIndex, factor = 1) {
+		this.rows[subtrahendRowIndex].forEach((el, colIndex) => {
+			this.rows[minuendRowIndex][colIndex] -= el * factor;
 		});
 	}
 
-	substractCols(minuendColIndex, subtrahendColIndex, factor = 1) {
-		this.matrix.forEach(row => {
+	subtractCols(minuendColIndex, subtrahendColIndex, factor = 1) {
+		this.rows.forEach(row => {
 			row[minuendColIndex] -= row[subtrahendColIndex] * factor;
 		});
 	}
 
 	multiplyRow(rowIndex, factor) {
-		this.matrix[rowIndex].forEach((_, colIndex) => {
-			this.matrix[rowIndex][colIndex] *= factor;
+		this.rows[rowIndex].forEach((_, colIndex) => {
+			this.rows[rowIndex][colIndex] *= factor;
 		});
 	}
 
 	multiplyCol(colIndex, factor) {
-		this.matrix.forEach(row => {
+		this.rows.forEach(row => {
 			row[colIndex] *= factor;
 		});
 	}
@@ -191,7 +254,7 @@ class Matrix {
 		const i = rowIndex;
 		const j = colIndex;
 
-		const submatrix = this.matrix
+		const submatrix = this.rows
 			.filter((_, rowIndex) => rowIndex !== i)
 			.map(row => row.filter((_, colIndex) => colIndex !== j));
 
@@ -213,7 +276,7 @@ class Matrix {
 	}
 
 	get clone() {
-		const clonedMatrix = new Matrix(this.matrix.map(row => {
+		const clonedMatrix = new Matrix(this.rows.map(row => {
 			return [...row.map(el => el)];
 		}));
 
@@ -222,16 +285,34 @@ class Matrix {
 
 	get size() {
 		const size = {
-			rows: this.matrix.length,
-			cols: this.matrix[0].length,
+			rows: this.rows.length,
+			cols: this.rows[0].length,
 		};
 
 		return size;
 	}
 
+	get elements() {
+		const elements = this.rows.flat();
+
+		return elements;
+	}
+
+	get min() {
+		const minEl = Math.min(...this.elements);
+
+		return minEl;
+	}
+
+	get max() {
+		const maxEl = Math.max(...this.elements);
+
+		return maxEl;
+	}
+
 	get transpose() {
-		const transpose = new Matrix(this.matrix[0].map((_, colIndex) => {
-			return this.matrix.map(row => row[colIndex]);
+		const transpose = new Matrix(this.rows[0].map((_, colIndex) => {
+			return this.rows.map(row => row[colIndex]);
 		}));
 
 		return transpose;
@@ -244,11 +325,11 @@ class Matrix {
 			return;
 		}
 
-		if (this.size.rows === 1) return this.matrix[0][0];
+		if (this.size.rows === 1) return this.rows[0][0];
 
 		const rowIndex = 0;
 
-		const determinant = this.matrix[rowIndex].reduce((acc, el, colIndex) => {
+		const determinant = this.rows[rowIndex].reduce((acc, el, colIndex) => {
 			const cofactor = this.getCofactor(rowIndex, colIndex);
 
 			return acc += el * cofactor;
@@ -268,12 +349,12 @@ class Matrix {
 	get comatrix() {
 		const comatrix = new Matrix(this.size.rows, this.size.cols);
 
-		this.matrix.forEach((row, rowIndex) => {
+		this.rows.forEach((row, rowIndex) => {
 			row.forEach((_, colIndex) => {
 				const r = rowIndex;
 				const c = colIndex;
 
-				comatrix.matrix[r][c] = this.getCofactor(r, c);
+				comatrix.rows[r][c] = this.getCofactor(r, c);
 			});
 		});
 
@@ -300,11 +381,13 @@ class Matrix {
 
 class LinearSystem {
 	static methods = {
-		cramer: Symbol('cramer'),
+		cramer: Symbol('Cramer\'s rule'),
 		matrix: Symbol('matrix'),
-		gaussianElimination: Symbol('gaussianElimination'),
-		luDecomposition: Symbol('luDecomposition'),
-	}
+		gaussianElimination: Symbol('Gaussian elimination'),
+		luDecomposition: Symbol('LU decomposition'),
+		jacobi: Symbol('Jacobi'),
+		gaussSeidel: Symbol('Gauss–Seidel'),
+	};
 
 	#methods = {
 		cramer: () => {
@@ -335,7 +418,7 @@ class LinearSystem {
 			const solutionMatrix = inverseMatrix.multiply(constTermMatrix);
 
 			this.variables.forEach((variable, index) => {
-				solution[variable] = solutionMatrix.matrix[index][0];
+				solution[variable] = solutionMatrix.rows[index][0];
 			});
 
 			return solution;
@@ -353,8 +436,8 @@ class LinearSystem {
 				const row = matrix.getRow(maxAbsValIndex);
 				let newMatrix = matrix.clone.deleteCol(0);
 
-				newMatrix.matrix.forEach((_, rowIndex) => {
-					rowIndex !== maxAbsValIndex && newMatrix.substractRows(
+				newMatrix.rows.forEach((_, rowIndex) => {
+					rowIndex !== maxAbsValIndex && newMatrix.subtractRows(
 						rowIndex, maxAbsValIndex, factors[rowIndex]
 					);
 				});
@@ -389,29 +472,29 @@ class LinearSystem {
 			const lowerTriangularMatrix = new Matrix(size, size).fill(0);
 			const upperTriangularMatrix = this.coefficientMatrix.clone;
 
-			lowerTriangularMatrix.matrix.forEach((row, rowIndex) => {
+			lowerTriangularMatrix.rows.forEach((row, rowIndex) => {
 				row[rowIndex] = 1;
 			});
 
 			for (let i = 0; i < size - 1; i++) {
 				for (let j = i + 1; j < size; j++) {
-					const factor = upperTriangularMatrix.matrix[j][i] 
-						/ upperTriangularMatrix.matrix[i][i];
+					const factor = upperTriangularMatrix.rows[j][i] 
+						/ upperTriangularMatrix.rows[i][i];
 
-					lowerTriangularMatrix.matrix[j][i] = factor;
-					upperTriangularMatrix.substractRows(j, i, factor);
+					lowerTriangularMatrix.rows[j][i] = factor;
+					upperTriangularMatrix.subtractRows(j, i, factor);
 				}
 			}
 
 			const uxMatrix = new Matrix(size, 1).fill(0);
 
-			uxMatrix.matrix.forEach((row, rowIndex) => {
+			uxMatrix.rows.forEach((row, rowIndex) => {
 				const constTerm = this.constTerms[rowIndex];
 
-				row[0] = constTerm - lowerTriangularMatrix.matrix[rowIndex]
+				row[0] = constTerm - lowerTriangularMatrix.rows[rowIndex]
 					.slice(0, rowIndex)
 					.reduce((acc, currValue, currIndex) => {
-						return acc + currValue * uxMatrix.matrix[currIndex][0];
+						return acc + currValue * uxMatrix.rows[currIndex][0];
 					}, 0);
 			});
 
@@ -419,7 +502,7 @@ class LinearSystem {
 				const row = upperTriangularMatrix.getRow(index);
 				const variable = this.variables[index];
 				
-				solution[variable] = uxMatrix.matrix[index][0];
+				solution[variable] = uxMatrix.rows[index][0];
 
 				if (index !== size - 1) {
 					getVariables(index + 1);
@@ -438,7 +521,87 @@ class LinearSystem {
 
 			return solution;
 		},
-	}
+
+		jacobi: (accuracy, matrixA, matrixB) => {
+			const initialApproximationMatrix = matrixB.clone;
+
+			function* getNextApproximation(prevApproximationMatrix) {
+				const nextApproximationMatrix = matrixB.add(
+					matrixA.multiply(prevApproximationMatrix)
+				);
+
+				const approxSolution = nextApproximationMatrix.rows
+					.reduce((solution, row, index) => {
+						solution[this.variables[index]] = row[0];
+
+						return solution;
+					}, {});
+
+				yield approxSolution;
+
+				const maxApproximationDiff = nextApproximationMatrix
+					.subtract(prevApproximationMatrix)
+					.map(Math.abs).max;
+
+				if (maxApproximationDiff < accuracy) return;
+
+				yield* getNextApproximation.call(this, nextApproximationMatrix);
+			}
+			
+			return getNextApproximation.call(this, initialApproximationMatrix);
+		},
+
+		gaussSeidel: (accuracy, matrixA, matrixB) => {
+			const prevApproxSolution = matrixB.rows
+				.flat()
+				.reduce((approxSolution, el, index) => {
+					approxSolution[this.variables[index]] = el;
+
+					return approxSolution;
+				}, {});
+
+			function *getNextApproximation(prevApproxSolution) {
+				const n = this.variables.length;
+				const approxSolution = {};
+
+				for (let i = 0; i < n; i++) {
+					const variable = this.variables[i];
+
+					approxSolution[variable] = matrixB.get(i, 0);
+
+					for (let j = 0; j < i; j++) {
+						approxSolution[variable] += matrixA.get(i, j)
+							* approxSolution[this.variables[j]];
+					}
+
+					for (let j = i + 1; j < n; j++) {
+						approxSolution[variable] += matrixA.get(i, j)
+							* prevApproxSolution[this.variables[j]];
+					}
+				}
+
+				yield approxSolution;
+
+				const approximationDiffs = [];
+
+				this.variables.forEach(key => {
+					approximationDiffs.push(
+						approxSolution[key] - prevApproxSolution[key]
+					);
+				});
+
+				const maxApproximationDiff = Math.max(
+					...approximationDiffs.map(Math.abs)
+				);
+
+				if (maxApproximationDiff < accuracy) return;
+
+				yield* getNextApproximation.call(this, approxSolution);
+			}
+
+			return getNextApproximation.call(this, prevApproxSolution);
+		},
+	};
 
 	constructor(linearEquations) {
 		const polynomRe = /((?:\+|\-)?\d+(?:\.\d+)?)([a-z])/g;
@@ -464,8 +627,8 @@ class LinearSystem {
 
 	solve(method = LinearSystem.methods.cramer) {
 		switch (method) {
-			case LinearSystem.methods.matrix:
-				return this.#methods.matrix();
+			case LinearSystem.methods.rows:
+				return this.#methods.rows();
 			case LinearSystem.methods.cramer:
 				return this.#methods.cramer();
 			case LinearSystem.methods.gaussianElimination:
@@ -476,15 +639,52 @@ class LinearSystem {
 				console.error('No such method');
 		}
 	}
+
+	solveIteratively(method = LinearSystem.methods.jacobi, accuracy = 0.001) {
+		const matrixA = new Matrix(this.coefficientMatrix.rows
+			.map((row, rowIndex) => {
+				const diagonalEl = row[rowIndex];
+
+				return row.map((el, colIndex) => {
+					return rowIndex === colIndex ? 0 : -el / diagonalEl;
+				});
+			})
+		);
+
+		const converges = matrixA.map(Math.abs).rows.every(row => {
+			const sum = row.reduce((acc, el) => acc + el);
+
+			return sum < 1;
+		});
+
+		if (!converges) {
+			console.error('The procedure does not converge');
+
+			return;
+		}
+
+		const matrixB = new Matrix(this.constTermMatrix.rows
+			.map((row, rowIndex) => {
+				const diagonalEl = this.coefficientMatrix.rows[rowIndex][rowIndex];
+
+				return row.map(el => el / diagonalEl);
+			})	
+		);
+
+		switch (method) {
+			case LinearSystem.methods.jacobi:
+				return this.#methods.jacobi(accuracy, matrixA, matrixB);
+			case LinearSystem.methods.gaussSeidel:
+				return this.#methods.gaussSeidel(accuracy, matrixA, matrixB);
+			default:
+				console.error('No such iterative method');
+		}
+	}
 }
 
 const linearSystem = new LinearSystem([
-	'1.24x-0.87y-3.17z=0.46',
-	'2.11x-0.45y+1.44z=1.5',
-	'0.48x+1.25y-0.63z=0.35',
+	'1.13x+0.27y-0.22z-0.18w=-1.21',
+	'-0.21x-0.65y+0.18z-0.18w=-0.33',
+	'0.12x+0.13y-0.73z+0.18w=0.48',
+	'0.33x-0.05y+0.06z-1.28w=-0.17',
 ]);
-
-console.log(linearSystem.solve(LinearSystem.methods.cramer));
-console.log(linearSystem.solve(LinearSystem.methods.matrix));
-console.log(linearSystem.solve(LinearSystem.methods.gaussianElimination));
-console.log(linearSystem.solve(LinearSystem.methods.luDecomposition));
