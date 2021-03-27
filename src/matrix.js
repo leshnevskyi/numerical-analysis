@@ -120,6 +120,12 @@ class Matrix {
 		return newMatrix;
 	}
 
+	toArray() {
+		const array = this.rows.flat();
+
+		return array;
+	}
+
 	add(...matrices) {
 		return Matrix.add(this, ...matrices);
 	}
