@@ -224,22 +224,31 @@ class LinearSystem {
 		},
 	};
 
-	constructor(linearEquations) {
-		const polynomRe = /((?:\+|\-)?\d+(?:\.\d+)?)([a-z])/g;
+	constructor(...args) {
+		if (args[0] instanceof Array) {
+			const linearEquations = args[0];
+			const polynomRe = /((?:\+|\-)?\d+(?:\.\d+)?)([a-z])/g;
 
-		this.coefficientMatrix = new Matrix(linearEquations.map(linearEquation => {
-			return [...linearEquation.matchAll(polynomRe)].map(match => {
-				return Number(match[1]);
+			this.coefficientMatrix = new Matrix(linearEquations.map(linearEquation => {
+				return [...linearEquation.matchAll(polynomRe)].map(match => {
+					return Number(match[1]);
+				});
+			}));
+
+			this.variables = [...linearEquations[0].matchAll(polynomRe)].map(match => {
+				return match[2];
 			});
-		}));
 
-		this.variables = [...linearEquations[0].matchAll(polynomRe)].map(match => {
-			return match[2];
-		});
-
-		this.constTerms = [...linearEquations.join(' ').matchAll(
-			/=((?:\+|\-)?\d+(?:\.\d+)?)/g
-		)].map(match => Number(match[1]));
+			this.constTerms = [...linearEquations.join(' ').matchAll(
+				/=((?:\+|\-)?\d+(?:\.\d+)?)/g
+			)].map(match => Number(match[1]));	
+		} else {
+			({
+				coefficientMatrix: this.coefficientMatrix,
+				variables: this.variables,
+				constTerms: this.constTerms,
+			} = args[0]);
+		}
 
 		this.constTermMatrix = new Matrix([this.constTerms]).transpose;
 		this.augmentedMatrix = this.coefficientMatrix.clone;
@@ -300,6 +309,23 @@ class LinearSystem {
 			default:
 				console.error('No such iterative method');
 		}
+	}
+
+	get normal() {
+		const variables = this.variables;
+		const transposeCoefficientMatrix = this.coefficientMatrix.transpose;
+		const newCoefficientMatrix = transposeCoefficientMatrix
+			.multiply(this.coefficientMatrix);
+		const newConstTerms = transposeCoefficientMatrix
+			.multiply(this.constTermMatrix)
+			.toArray();
+		const normal = new LinearSystem({
+			variables,
+			coefficientMatrix: newCoefficientMatrix,
+			constTerms: newConstTerms,
+		});
+
+		return normal;
 	}
 }
 
