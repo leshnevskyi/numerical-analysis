@@ -6,6 +6,7 @@ class LinearSystem {
 		matrix: Symbol('matrix'),
 		gaussianElimination: Symbol('Gaussian elimination'),
 		luDecomposition: Symbol('LU decomposition'),
+		choleskyDecomposition: Symbol('Cholesky decomposition'), 
 		jacobi: Symbol('Jacobi'),
 		gaussSeidel: Symbol('Gauss–Seidel'),
 	};
@@ -15,7 +16,7 @@ class LinearSystem {
 			const solution = {};
 			const determinant = this.coefficientMatrix.determinant;
 
-			if (determinant === 0) {
+			if (!determinant) {
 				console.error(`The determinant can't be zero`);
 
 				return;
@@ -143,6 +144,77 @@ class LinearSystem {
 			return solution;
 		},
 
+		choleskyDecomposition: () => {
+			const solution = {};
+			const matrixN = this.normal.coefficientMatrix;
+
+			if (matrixN.determinant <= 0) {
+				console.error(
+					'The coefficient matrix must be positive-definite'
+				);
+
+				return;
+			}
+
+			const matrixC = this.normal.constTermMatrix;
+			const size = matrixN.size.rows;
+			const matrixL = new Matrix(size).fill(0);
+
+			for (let i = 0; i < size; i++) {
+				for (let j = 0; j <= i; j++) {
+					let currEl;
+					let sum = 0;
+
+					for (let k = 0; k < j; k++) {
+						sum += matrixL.get(i, k) * matrixL.get(j, k);
+					}
+					
+					currEl = i === j
+						? Math.sqrt(matrixN.get(i, i) - sum)
+						: (matrixN.get(i, j) - sum) / matrixL.get(j, j);
+
+					matrixL.set(i, j, currEl);
+				}
+			}
+
+			const matrixLTranspose = matrixL.transpose;
+			const matrixY = new Matrix(size, 1);
+
+			for (let i = 0; i < size; i++) {
+				const currEl = (matrixC.get(i, 0) - [...matrixL.rows[i]]
+					.slice(0, i)
+					.reduce((acc, currEl, colIndex) => {
+						return acc + currEl * matrixY.get(colIndex, 0);
+					}, 0)
+				) / matrixL.get(i, i);
+
+				matrixY.set(i, 0, currEl);
+			}
+
+			const getVariables = (index = 0) => {
+				const row = matrixLTranspose.getRow(index);
+				const variable = this.variables[index];
+				
+				solution[variable] = matrixY.get(index, 0);
+				
+				if (index !== size - 1) {
+					getVariables(index + 1);
+
+					row.slice(index + 1, size).forEach((coefficient, currIndex) => {
+						const currVariable = this.variables[index + 1 + currIndex];
+						
+						solution[variable] -= coefficient * solution[currVariable];
+					});
+				}
+
+				solution[variable] /= row[index];
+			}
+
+			getVariables();
+
+			return solution;
+		},
+
 		jacobi: (accuracy, matrixA, matrixB) => {
 			const initialApproximationMatrix = matrixB.clone;
 
@@ -181,7 +253,7 @@ class LinearSystem {
 					return approxSolution;
 				}, {});
 
-			function *getNextApproximation(prevApproxSolution) {
+			function* getNextApproximation(prevApproxSolution) {
 				const n = this.variables.length;
 				const approxSolution = {};
 
@@ -263,6 +335,8 @@ class LinearSystem {
 				return this.#methods.cramer();
 			case LinearSystem.methods.gaussianElimination:
 				return this.#methods.gaussianElimination();
+			case LinearSystem.methods.choleskyDecomposition:
+				return this.#methods.choleskyDecomposition();
 			case LinearSystem.methods.luDecomposition:
 				return this.#methods.luDecomposition();
 			default:

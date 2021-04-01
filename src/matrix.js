@@ -4,7 +4,7 @@ class Matrix {
 			this.rows = args[0];
 		} else {
 			let rowCount = args[0] ?? 1;
-			let colCount = args[1] ?? 1;
+			let colCount = args[1] ?? rowCount;
 			
 			this.rows = new Array(rowCount).fill(null).map(() => {
 				const row = new Array(colCount).fill(null);
@@ -98,6 +98,10 @@ class Matrix {
 		const el = this.rows[i][j];
 
 		return el;
+	}
+
+	set(i, j, el) {
+		this.rows[i][j] = el;
 	}
 
 	map(callback, thisArg = this) {
@@ -279,6 +283,14 @@ class Matrix {
 		const cofactor = (-1) ** (rowIndex + colIndex) * minor;
 
 		return cofactor;
+	}
+
+	log(caption, digits = 3) {
+		const matrix = this.map(el => Number(el.toFixed(digits)));
+	
+		console.group(caption);
+		console.table(matrix.rows);
+		console.groupEnd();
 	}
 
 	get clone() {
