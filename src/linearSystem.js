@@ -299,7 +299,7 @@ class LinearSystem {
 	constructor(...args) {
 		if (args[0] instanceof Array) {
 			const linearEquations = args[0];
-			const polynomRe = /((?:\+|\-)?\d+(?:\.\d+)?)([a-z])/g;
+			const polynomRe = /((?:\+|\-)?\d+(?:\.\d+)?)([a-z](?:\d))/g;
 
 			this.coefficientMatrix = new Matrix(linearEquations.map(linearEquation => {
 				return [...linearEquation.matchAll(polynomRe)].map(match => {
