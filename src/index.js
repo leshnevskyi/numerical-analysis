@@ -1,11 +1,27 @@
 import LinearSystem from './linearSystem.js';
 
 const linearSystem = new LinearSystem([
-	'1x-3y+2z=-3',
-	'-1x+0y+5z=10',
-	'-2x-1y-2z=7',
-	'3x-1y-5z=-1',
-	'-2x-1y+3z=-4',
+	'2x+1y=3',
+	'1x-2y=1',
 ]);
 
-console.log(linearSystem.solve(LinearSystem.methods.choleskyDecomposition));
+function logIterations(method, caption) {
+	const approxSolutionsGen = linearSystem.solveIteratively(method);
+
+	const approxSolutions = [];
+
+	for (const solution of approxSolutionsGen) {
+		for (const variable in solution) {
+			solution[variable] = Number(solution[variable].toFixed(3));
+		}
+	
+		approxSolutions.push(solution);
+	}
+	
+	console.group(caption);
+	console.table(approxSolutions);
+	console.groupEnd();
+}
+
+logIterations(LinearSystem.methods.jacobi,'Метод Якобі');
+logIterations(LinearSystem.methods.gaussSeidel, 'Метод Зейделя');
